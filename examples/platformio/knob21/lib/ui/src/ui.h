@@ -71,6 +71,11 @@ LV_IMG_DECLARE(ui_img_362584155);    // assets/return-png.png
 LV_IMG_DECLARE(ui_img_174066631);    // assets/ok-icon.png
 LV_IMG_DECLARE(ui_img_min_png);    // assets/min.png
 LV_IMG_DECLARE(ui_img_1620963198);    // assets/time-png.png
+LV_IMG_DECLARE(ui_img_avatar_curie);
+LV_IMG_DECLARE(ui_img_avatar_einstein);
+LV_IMG_DECLARE(ui_img_avatar_confucius);
+LV_IMG_DECLARE(ui_img_avatar_newton);
+LV_IMG_DECLARE(ui_img_avatar_sushi);
 
 
 void   LVGL_knob_event(void *event);

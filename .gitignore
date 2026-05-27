@@ -13,3 +13,7 @@
 Thumbs.db
 *.tmp
 *.log
+
+# Generated scratch assets
+tmp_pptx_assets/
+examples/platformio/knob21/assets_preview/
