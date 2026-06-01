@@ -17,3 +17,10 @@ Thumbs.db
 # Generated scratch assets
 tmp_pptx_assets/
 examples/platformio/knob21/assets_preview/
+
+# Local flashing artifacts
+examples/platformio/knob21/*_merged_0x0.bin
+tools/flash_download_tool_3.9.5/configure/
+tools/flash_download_tool_3.9.5/dl_temp/
+tools/flash_download_tool_3.9.5/flash_download_tool_3.9.3.exe
+docs/*.bundle

@@ -84,6 +84,16 @@ static void ui_show_avatar(int index)
     }
 }
 
+void ui_select_avatar(int index)
+{
+    ui_show_avatar(index);
+}
+
+int ui_get_avatar_index(void)
+{
+    return avatar_index;
+}
+
 static void ui_next_avatar(void)
 {
     ui_show_avatar(avatar_index + 1);
@@ -102,8 +112,10 @@ void LVGL_knob_event(void *event)
 
     if ((int)event == KNOB_LEFT) {
         ui_prev_avatar();
+        device_event_emit("knob", "left", (int)event, avatar_index);
     } else if ((int)event == KNOB_RIGHT) {
         ui_next_avatar();
+        device_event_emit("knob", "right", (int)event, avatar_index);
     }
 }
 
@@ -113,8 +125,12 @@ void LVGL_button_event(void *event)
 
     if ((int)event == BUTTON_SINGLE_CLICK) {
         ui_next_avatar();
+        device_event_emit("button", "single_click", (int)event, avatar_index);
+    } else if ((int)event == BUTTON_DOUBLE_CLICK) {
+        device_event_emit("button", "double_click", (int)event, avatar_index);
     } else if ((int)event == BUTTON_LONG_PRESS_START) {
         ui_prev_avatar();
+        device_event_emit("button", "long_press_start", (int)event, avatar_index);
     }
 }
 
@@ -122,6 +138,7 @@ void ui_event_background(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         ui_next_avatar();
+        device_event_emit("touch", "click", 0, avatar_index);
     }
 }
 
@@ -129,6 +146,7 @@ void ui_event_Button1(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         ui_next_avatar();
+        device_event_emit("touch", "button_next", 0, avatar_index);
     }
 }
 
@@ -136,6 +154,7 @@ void ui_event_Button2(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         ui_prev_avatar();
+        device_event_emit("touch", "button_prev", 0, avatar_index);
     }
 }
 
@@ -150,6 +169,7 @@ void ui_event_Button4(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         ui_prev_avatar();
+        device_event_emit("touch", "button_prev", 0, avatar_index);
     }
 }
 
@@ -157,6 +177,7 @@ void ui_event_Button5(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         ui_next_avatar();
+        device_event_emit("touch", "button_next", 0, avatar_index);
     }
 }
 

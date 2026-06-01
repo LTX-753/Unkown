@@ -29,9 +29,90 @@ using namespace esp_panel::board;
 
 /*Knob event definition*/
 ESP_Knob *knob;
+static uint32_t event_sequence = 0;
+
+static uint32_t next_event_sequence()
+{
+    return ++event_sequence;
+}
+
+extern "C" void device_event_emit(const char *source, const char *action, int value, int avatar_index)
+{
+    static const char *avatar_names[] = {
+        "curie",
+        "einstein",
+        "confucius",
+        "newton",
+        "sushi",
+    };
+    const int avatar_count = sizeof(avatar_names) / sizeof(avatar_names[0]);
+    const char *name = (avatar_index >= 0 && avatar_index < avatar_count) ? avatar_names[avatar_index] : "unknown";
+
+    Serial.printf(
+        "{\"type\":\"input\",\"seq\":%lu,\"ms\":%lu,\"source\":\"%s\",\"action\":\"%s\",\"value\":%d,\"avatar\":%d,\"name\":\"%s\"}\n",
+        (unsigned long)next_event_sequence(),
+        (unsigned long)millis(),
+        source,
+        action,
+        value,
+        avatar_index,
+        name
+    );
+}
+
+static void emit_device_status(const char *event)
+{
+    Serial.printf(
+        "{\"type\":\"device\",\"seq\":%lu,\"ms\":%lu,\"event\":\"%s\",\"model\":\"UEDX48480021-MD80ET\",\"avatar\":%d,\"baud\":115200}\n",
+        (unsigned long)next_event_sequence(),
+        (unsigned long)millis(),
+        event,
+        ui_get_avatar_index()
+    );
+}
+
+static void handle_serial_command(const String &raw_command)
+{
+    String command = raw_command;
+    command.trim();
+    command.toLowerCase();
+
+    if (command.length() == 0) {
+        return;
+    }
+
+    if (command == "ping") {
+        emit_device_status("pong");
+        return;
+    }
+
+    if (command == "status") {
+        emit_device_status("status");
+        return;
+    }
+
+    if (command == "next" || command == "prev" || command.startsWith("select:")) {
+        lvgl_port_lock(-1);
+        if (command == "next") {
+            ui_select_avatar(ui_get_avatar_index() + 1);
+            device_event_emit("serial", "next", 0, ui_get_avatar_index());
+        } else if (command == "prev") {
+            ui_select_avatar(ui_get_avatar_index() - 1);
+            device_event_emit("serial", "prev", 0, ui_get_avatar_index());
+        } else {
+            int index = command.substring(7).toInt();
+            ui_select_avatar(index);
+            device_event_emit("serial", "select", index, ui_get_avatar_index());
+        }
+        lvgl_port_unlock();
+        return;
+    }
+
+    Serial.printf("{\"type\":\"error\",\"message\":\"unknown_command\",\"command\":\"%s\"}\n", command.c_str());
+}
+
 void onKnobLeftEventCallback(int count, void *usr_data)
 {
-    // Serial.printf("Detect left event, count is %d\n", count);
     lvgl_port_lock(-1);
     LVGL_knob_event((void*)KNOB_LEFT);
     lvgl_port_unlock();
@@ -39,14 +120,12 @@ void onKnobLeftEventCallback(int count, void *usr_data)
 
 void onKnobRightEventCallback(int count, void *usr_data)
 {
-    // Serial.printf("Detect right event, count is %d\n", count);
     lvgl_port_lock(-1);
     LVGL_knob_event((void*)KNOB_RIGHT);
     lvgl_port_unlock();
 }
 
 static void SingleClickCb(void *button_handle, void *usr_data) {
-    // Serial.println("Button Single Click");
     lvgl_port_lock(-1);
     LVGL_button_event((void*)BUTTON_SINGLE_CLICK);
     lvgl_port_unlock();
@@ -54,11 +133,12 @@ static void SingleClickCb(void *button_handle, void *usr_data) {
 
 static void DoubleClickCb(void *button_handle, void *usr_data)
 {
-    // Serial.println("Button Double Click");
+    lvgl_port_lock(-1);
+    LVGL_button_event((void*)BUTTON_DOUBLE_CLICK);
+    lvgl_port_unlock();
 }
 
 static void LongPressStartCb(void *button_handle, void *usr_data) {
-    // Serial.println("Button Long Press Start");
     lvgl_port_lock(-1);
     LVGL_button_event((void*)BUTTON_LONG_PRESS_START);
     lvgl_port_unlock();
@@ -68,7 +148,7 @@ void setup()
 {
     Serial.begin(115200);
 
-    Serial.println("Initializing board");
+    emit_device_status("boot");
     Board *board = new Board();
     board->init();
 #if LVGL_PORT_AVOID_TEARING_MODE
@@ -89,23 +169,19 @@ void setup()
 #endif
     assert(board->begin());
 
-    Serial.println("Initializing LVGL");
     lvgl_port_init(board->getLCD(), board->getTouch());
 
     /*knob initialization*/
-    Serial.println("Initialize Knob device");
     knob = new ESP_Knob(GPIO_NUM_KNOB_PIN_A, GPIO_NUM_KNOB_PIN_B);
     knob->begin();
     knob->attachLeftEventCallback(onKnobLeftEventCallback);
     knob->attachRightEventCallback(onKnobRightEventCallback);
 
-    Serial.println("Initialize Button device");
     Button *btn = new Button(GPIO_BUTTON_PIN, false);
     btn->attachSingleClickEventCb(&SingleClickCb, NULL);
     btn->attachDoubleClickEventCb(&DoubleClickCb, NULL);
     btn->attachLongPressStartEventCb(&LongPressStartCb, NULL);
 
-    Serial.println("Creating UI");
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     lvgl_port_lock(-1);
 
@@ -151,6 +227,17 @@ void setup()
 
 void loop()
 {
-    Serial.println("IDLE loop");
-    delay(1000);
+    static bool host_connected = false;
+    bool connected = Serial;
+
+    if (connected && !host_connected) {
+        emit_device_status("ready");
+    }
+    host_connected = connected;
+
+    while (Serial.available() > 0) {
+        handle_serial_command(Serial.readStringUntil('\n'));
+    }
+
+    delay(20);
 }

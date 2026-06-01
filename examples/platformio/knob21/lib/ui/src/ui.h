@@ -80,6 +80,9 @@ LV_IMG_DECLARE(ui_img_avatar_sushi);
 
 void   LVGL_knob_event(void *event);
 void   LVGL_button_event(void *event);
+void   device_event_emit(const char *source, const char *action, int value, int avatar_index);
+void   ui_select_avatar(int index);
+int    ui_get_avatar_index(void);
 // UI INIT
 void ui_init(void);
 
