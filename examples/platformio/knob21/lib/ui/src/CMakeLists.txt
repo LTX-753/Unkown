@@ -16,6 +16,16 @@ SET(SOURCES screens/ui_Screen1.c
     images/ui_img_362584155.c
     images/ui_img_174066631.c
     images/ui_img_min_png.c
-    images/ui_img_1620963198.c)
+    images/ui_img_1620963198.c
+    images/ui_img_avatar_curie.c
+    images/ui_img_avatar_einstein.c
+    images/ui_img_avatar_confucius.c
+    images/ui_img_avatar_newton.c
+    images/ui_img_avatar_sushi.c
+    images/ui_img_response_curie.c
+    images/ui_img_response_einstein.c
+    images/ui_img_response_confucius.c
+    images/ui_img_response_newton.c
+    images/ui_img_response_sushi.c)
 
 add_library(ui ${SOURCES})

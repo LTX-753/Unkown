@@ -5,6 +5,7 @@
  */
 
 #include <Arduino.h>
+#include <atomic>
 #include <esp_display_panel.hpp>
 #include <lvgl.h>
 #include "lvgl_v8_port.h"
@@ -30,6 +31,7 @@ using namespace esp_panel::board;
 /*Knob event definition*/
 ESP_Knob *knob;
 static uint32_t event_sequence = 0;
+static std::atomic<uint32_t> pending_button_press_down {0};
 
 static uint32_t next_event_sequence()
 {
@@ -39,11 +41,11 @@ static uint32_t next_event_sequence()
 extern "C" void device_event_emit(const char *source, const char *action, int value, int avatar_index)
 {
     static const char *avatar_names[] = {
-        "curie",
+        "zhuge_liang",
         "einstein",
-        "confucius",
-        "newton",
+        "curie",
         "sushi",
+        "confucius",
     };
     const int avatar_count = sizeof(avatar_names) / sizeof(avatar_names[0]);
     const char *name = (avatar_index >= 0 && avatar_index < avatar_count) ? avatar_names[avatar_index] : "unknown";
@@ -114,15 +116,33 @@ static void handle_serial_command(const String &raw_command)
 void onKnobLeftEventCallback(int count, void *usr_data)
 {
     lvgl_port_lock(-1);
-    LVGL_knob_event((void*)KNOB_LEFT);
+    LVGL_knob_event((void*)KNOB_RIGHT);
     lvgl_port_unlock();
 }
 
 void onKnobRightEventCallback(int count, void *usr_data)
 {
     lvgl_port_lock(-1);
-    LVGL_knob_event((void*)KNOB_RIGHT);
+    LVGL_knob_event((void*)KNOB_LEFT);
     lvgl_port_unlock();
+}
+
+static void PressDownCb(void *button_handle, void *usr_data)
+{
+    (void)button_handle;
+    (void)usr_data;
+    pending_button_press_down.fetch_add(1, std::memory_order_relaxed);
+}
+
+static void process_pending_button_events()
+{
+    uint32_t press_count = pending_button_press_down.exchange(0, std::memory_order_relaxed);
+
+    while (press_count-- > 0) {
+        lvgl_port_lock(-1);
+        LVGL_button_event((void*)BUTTON_PRESS_DOWN);
+        lvgl_port_unlock();
+    }
 }
 
 static void SingleClickCb(void *button_handle, void *usr_data) {
@@ -178,9 +198,7 @@ void setup()
     knob->attachRightEventCallback(onKnobRightEventCallback);
 
     Button *btn = new Button(GPIO_BUTTON_PIN, false);
-    btn->attachSingleClickEventCb(&SingleClickCb, NULL);
-    btn->attachDoubleClickEventCb(&DoubleClickCb, NULL);
-    btn->attachLongPressStartEventCb(&LongPressStartCb, NULL);
+    btn->attachPressDownEventCb(&PressDownCb, NULL);
 
     /* Lock the mutex due to the LVGL APIs are not thread-safe */
     lvgl_port_lock(-1);
@@ -238,6 +256,8 @@ void loop()
     while (Serial.available() > 0) {
         handle_serial_command(Serial.readStringUntil('\n'));
     }
+
+    process_pending_button_events();
 
     delay(20);
 }

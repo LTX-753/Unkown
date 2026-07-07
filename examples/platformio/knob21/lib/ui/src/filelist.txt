@@ -22,3 +22,8 @@ images/ui_img_avatar_einstein.c
 images/ui_img_avatar_confucius.c
 images/ui_img_avatar_newton.c
 images/ui_img_avatar_sushi.c
+images/ui_img_response_curie.c
+images/ui_img_response_einstein.c
+images/ui_img_response_confucius.c
+images/ui_img_response_newton.c
+images/ui_img_response_sushi.c

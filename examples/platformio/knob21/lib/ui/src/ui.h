@@ -21,7 +21,11 @@ void ui_Screen1_screen_init(void);
 extern lv_obj_t * ui_Screen1;
 void ui_event_background(lv_event_t * e);
 extern lv_obj_t * ui_background;
+extern lv_obj_t * ui_select_feedback;
+extern lv_obj_t * ui_back_button;
+extern lv_obj_t * ui_back_label;
 extern lv_obj_t * ui_Image1;
+void ui_event_back_button(lv_event_t * e);
 void ui_event_Button1(lv_event_t * e);
 extern lv_obj_t * ui_Button1;
 void ui_event_Button2(lv_event_t * e);
@@ -76,6 +80,11 @@ LV_IMG_DECLARE(ui_img_avatar_einstein);
 LV_IMG_DECLARE(ui_img_avatar_confucius);
 LV_IMG_DECLARE(ui_img_avatar_newton);
 LV_IMG_DECLARE(ui_img_avatar_sushi);
+LV_IMG_DECLARE(ui_img_response_curie);
+LV_IMG_DECLARE(ui_img_response_einstein);
+LV_IMG_DECLARE(ui_img_response_confucius);
+LV_IMG_DECLARE(ui_img_response_newton);
+LV_IMG_DECLARE(ui_img_response_sushi);
 
 
 void   LVGL_knob_event(void *event);

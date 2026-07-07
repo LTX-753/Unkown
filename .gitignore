@@ -24,3 +24,11 @@ tools/flash_download_tool_3.9.5/configure/
 tools/flash_download_tool_3.9.5/dl_temp/
 tools/flash_download_tool_3.9.5/flash_download_tool_3.9.3.exe
 docs/*.bundle
+
+# Generated field delivery packages and previews
+digital_human_knob_field_delivery_package_*.zip
+field_delivery_package_*/
+field_flash_package/
+preview_*.jpg
+preview_*.png
+examples/platformio/knob21/assets/digital_humans/*.png
